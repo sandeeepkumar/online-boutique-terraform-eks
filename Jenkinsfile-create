@@ -1,0 +1,80 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_DEFAULT_REGION = "ap-south-1"
+        AWS_CREDS = credentials('aws-creds')
+        AWS_EKS_CLUSTER_NAME = ""
+    }
+
+    stages {
+        
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        
+        stage('Git Checkout') {
+            steps {
+                git branch: 'feature', credentialsId: 'git-creds', url: 'https://github.com/TechITFactoryb01/online-boutique-platform-terraform.git'
+            }
+        }
+        
+        stage('Creating S3-DynamoDB') {
+            steps {
+                dir('s3-dynamodb') {
+                    sh '''
+                    terraform init
+                    terraform validate
+                    terraform plan
+                    terraform apply -auto-approve
+                    '''
+                }
+            }
+        }
+        
+        stage('Initializing Terraform') {
+            steps {
+                dir('dev') {
+                    sh 'terraform init'
+                }
+            }
+        }
+        
+        stage('Validating Terraform Configuration') {
+            steps {
+              dir('dev') {
+                  sh 'terraform validate'
+              }
+            }
+        }
+        
+        stage('Planning for Platform Creation') {
+            steps {
+                dir('dev') {
+                    sh 'terraform plan -var-file=dev.tfvars'
+                }
+            }
+        }
+        
+        stage('Creating Platform') {
+            steps {
+                dir('dev') {
+                    script {
+                    sh 'terraform apply -var-file=dev.tfvars -auto-approve'
+                    AWS_EKS_CLUSTER_NAME = sh(script: "terraform output cluster_name", returnStdout: true).trim()
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+            success {
+                // Archive the environment variable for downstream jobs
+                writeFile file: 'env-vars.yaml', text: "AWS_EKS_CLUSTER_NAME: ${AWS_EKS_CLUSTER_NAME}"
+                archiveArtifacts artifacts: 'env-vars.yaml', allowEmptyArchive: true
+            }
+    }
+}

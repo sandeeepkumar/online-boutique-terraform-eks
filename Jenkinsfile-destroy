@@ -1,0 +1,45 @@
+pipeline {
+    
+    agent any
+    
+    environment {
+        AWS_DEFAULT_REGION = "us-east-1"
+        // "aws-creds" is the ID of the Jenkins Credential holding your AWS Credentials. Install AWS Credentials Plugin
+        AWS_CREDS = credentials('aws-creds')
+    }
+
+    stages {
+        
+        stage('Git Checkout') {
+            steps {
+                // "git-creds" is the ID of the Jenkins Credential holding your GitHub Credentials
+                git branch: 'feature', credentialsId: 'git-creds', url: 'https://github.com/TechITFactoryb01/online-boutique-platform-terraform.git'
+            }
+        }
+
+        stage('Initializing Terraform') {
+            steps {
+                dir('dev') {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Destroying Platform') {
+            steps {
+                dir('dev') {
+                    sh 'terraform destroy -var-file=dev.tfvars -auto-approve'
+                }
+            }
+        }
+        
+        stage('Destroying S3-DynamoDB') {
+            steps {
+                // Make sure the name "online-boutique-platform-terraform-create" in below path match the Jenkins job name for creating the AWS Platform uisng terraform.
+                dir('/var/lib/jenkins/workspace/TIF DevOps Dynamics/s3-dynamodb') {
+                    sh 'terraform destroy -auto-approve'
+                }
+            }
+        }
+    }
+}
