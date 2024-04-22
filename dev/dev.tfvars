@@ -1,7 +1,7 @@
-provider_region = "us-east-1"
+provider_region = "ap-south-1"
 vpc_cidr = "10.0.0.0/16"
 cidr_pub_subnet = ["10.0.101.0/24", "10.0.102.0/24"]
-availability_zones = ["us-east-1a", "us-east-1b"]
+availability_zones = ["ap-south-1a", "ap-south-1b"]
 env_name = "dev"
 vpc_tag_name = "terra-vpc"
 igw_tag_name = "terra-igw"
