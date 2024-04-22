@@ -3,8 +3,8 @@ pipeline {
     
     environment {
         AWS_DEFAULT_REGION = "ap-south-1"
-        AWS_CREDS = credentials('aws-creds')
-        AWS_EKS_CLUSTER_NAME = ""
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
     }
 
     stages {
@@ -17,7 +17,7 @@ pipeline {
         
         stage('Git Checkout') {
             steps {
-                git branch: 'feature', credentialsId: 'git-creds', url: 'https://github.com/TechITFactoryb01/online-boutique-platform-terraform.git'
+                git 'https://github.com/sandeeepkumar/online-boutique-terraform-eks.git'
             }
         }
         
